@@ -68,12 +68,6 @@ API_KEY = 'your_tmdb_api_key'
 
 ---
 
-## 📸 Screenshots
-
-(Add your app screenshots here)
-
----
-
 ## 💡 How It Works
 
 1. Load preprocessed movie dataset & cosine similarity matrix (`movies.pkl`, `similarity.pkl`)
