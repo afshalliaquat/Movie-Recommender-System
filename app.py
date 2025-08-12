@@ -2,13 +2,12 @@ import streamlit as st
 import pandas as pd
 import joblib
 import requests
+import base64
 
-# Load data
 movies = joblib.load('movies.pkl')
 similarity = joblib.load('similarity.pkl')
-
-
-API_KEY = '694b14c5d186529e5d415e1d73c56e16'  # ← Replace with your actual key
+OMDB_API_KEY = '' # ← Replace with your actual key
+API_KEY = ''  # ← Replace with your actual key
 @st.cache_data
 def fetch_poster(movie_title):
     url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={movie_title}"
@@ -22,7 +21,43 @@ def fetch_poster(movie_title):
             return full_path
     return "https://via.placeholder.com/200x300?text=No+Poster"
 
-# Recommendation logic
+
+
+
+def fetch_movie_details_and_cast(movie_title):
+    search_url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={movie_title}"
+    search_response = requests.get(search_url).json()
+
+    if search_response['results']:
+        movie = search_response['results'][0]
+        movie_id = movie['id']
+
+        details_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
+        details_response = requests.get(details_url).json()
+
+        cast_url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits?api_key={API_KEY}"
+        cast_response = requests.get(cast_url).json()
+        cast = [member['name'] for member in cast_response.get('cast', [])[:3]]
+
+        poster_path = details_response.get('poster_path', '')
+        poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "https://via.placeholder.com/200x300?text=No+Poster"
+
+        omdb_url = f"http://www.omdbapi.com/?t={movie_title}&apikey={OMDB_API_KEY}&plot=full"
+        omdb_response = requests.get(omdb_url).json()
+        plot = omdb_response.get('Plot', 'No description available.') 
+
+        return {
+            "title": details_response.get('title', 'N/A'),
+            "Plot": plot,
+            "rating": details_response.get('vote_average', 'N/A'),
+            "poster_url": poster_url,
+            "cast": cast,
+            "movie_url": f"https://www.themoviedb.org/movie/{movie_id}"
+        }
+    return None
+
+
+
 def recommend(movie):
     index = movies[movies['title'] == movie].index[0]
     distances = list(enumerate(similarity[index]))
@@ -30,10 +65,8 @@ def recommend(movie):
     recommended_movies = [movies.iloc[i[0]].title for i in movies_list]
     return recommended_movies
 
-# Set page config
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="centered")
 
-# Optional: Custom CSS for modern feel
 st.markdown("""
     <style>
     .title {
@@ -135,6 +168,15 @@ div[data-baseweb="select"] {
 div[data-baseweb="select"] * {
     color: black !important;
 }
+    .stForm button {
+    width: 90% !important;
+    min-width: 120px !important;
+    white-space: nowrap !important;
+    margin: 8px auto 0 auto !important;
+    font-size: 18px !important;
+    border-radius: 8px !important;
+    display: block !important;
+}
     </style>
 """, unsafe_allow_html=True)
 
@@ -150,10 +192,9 @@ st.markdown("""
 
 selected_movie = st.selectbox(
     "",  # Empty label since we styled it manually
-    movies['title'].values
+    movies['title'].values,
+    key="movie_select"
 )
-
-import base64
 
 def set_bg_from_local(image_path):
     with open(image_path, "rb") as img_file:
@@ -172,20 +213,34 @@ def set_bg_from_local(image_path):
 set_bg_from_local("bg.jpg")
 
 if st.button("🔍 Recommend Similar Movies"):
-    recommendations = recommend(selected_movie)
+    st.session_state.show_recommendations = True
 
+if st.session_state.get("show_recommendations", False):
+    recommendations = recommend(selected_movie)
     st.markdown('<h3 style="color: white; font-weight: bold;">📽️ Top 5 Recommendations</h3>', unsafe_allow_html=True)
 
-    # Start horizontal scrollable row
-    # Start collecting all cards as a single HTML string
     spaced_cols = st.columns([4, 4, 40, 4, 40, 4, 40, 0.4, 40, 0.4, 4])
- 
-    for i, movie in enumerate(recommendations):
-        poster_url = fetch_poster(movie)
-        with spaced_cols[i * 2+1]:  # 0, 2, 4, 6, 8 (skip spaces)
+    for movie in recommendations:
+        details = fetch_movie_details_and_cast(movie)
+        if details:
             st.markdown(f"""
-                <div class="poster-card">
-                    <img src="{poster_url}" alt="{movie} poster">
-                    <div class="poster-title">{movie}</div>
+                <div style="display: flex; align-items: flex-start; background: white; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.12); margin: 0 auto 24px auto; max-width: 700px; min-height: 240px;">
+                    <img src="{details['poster_url']}" alt="{details['title']} poster" style="border-radius: 12px; width: 160px; height: 240px; object-fit: cover; margin: 16px;">
+                    <div style="padding: 16px 20px 16px 0; flex: 1;">
+                        <div class="poster-title" style="font-size: 20px; font-weight: bold; color: #333;">{details['title']}</div>
+                        <div style="font-size:15px; color:#666; margin: 8px 0 4px 0;">
+                            <b>⭐ {round(details['rating'],1)}/10</b>
+                            <div style="height:10px"></div>
+                            <b>Cast:</b> {', '.join(details['cast'])}
+                        </div>
+                        <div style="font-size:14px; color:#444; margin-top: 10px;">
+                            <b>Plot:</b> {details['Plot']}
+                        </div>
+                         <div style="margin-top: 12px;">
+                <a href="{details['movie_url']}" target="_blank" style="color: #FF4B4B; font-weight: bold; text-decoration: none;">
+                    🔗 More Details
+                </a>
+            </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
