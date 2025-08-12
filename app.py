@@ -88,13 +88,12 @@ st.markdown("""
     color: white !important;
     font-weight: bold;
     border-radius: 12px;
-    padding: 10px 12px;        /* ↑ Increased size */
+    padding: 10px 12px;       
     font-size: 24px !important;     border: none;
     transition: background-color 0.3s ease;
     cursor: pointer;
 }
 
-/* Hover state */
 .stButton>button:hover {
     background-color: #e03e3e !important;
     color: white !important;
@@ -126,15 +125,15 @@ st.markdown("""
     justify-content: space-between;
     position: relative;
     z-index: 1;
-    margin-left: -20px; /* creates stacking overlap effect */
+    margin-left: -20px; 
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 
 .poster-card:hover {
-    transform: translateY(-16px) scale(1.08);  /* more lift and zoom */
-    z-index: 99;  /* bring it above all */
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);  /* strong shadow */
+    transform: translateY(-16px) scale(1.08);  
+    z-index: 99;  
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);  
     border: 1px solid #aaa;
 }
 
@@ -152,19 +151,18 @@ st.markdown("""
     color: #333;
     margin-top: 5px;
 }div[data-baseweb="select"] {
-    width: 500px !important;  /* You can adjust the width as needed */
-}
+    width: 500px !important; 
+    }
 div[data-baseweb="select"] {
     background-color: white !important;
     width: 900px !important;
     font-size: 18px !important;
     border-radius: 8px !important;
     padding: 10px !important;
-    margin-top: -30px !important;  /* This line moves it up */
+    margin-top: -30px !important;  
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Text color inside dropdown */
 div[data-baseweb="select"] * {
     color: black !important;
 }
@@ -180,10 +178,8 @@ div[data-baseweb="select"] * {
     </style>
 """, unsafe_allow_html=True)
 
-# App title
 st.markdown('<div class="title">🎬 Movie Recommender</div>', unsafe_allow_html=True)
 
-# Movie selection box
 st.markdown("""
     <div style="color: white; font-size: 24px; font-weight: bold; margin-bottom: 10px;">
         🎥 Choose a movie you like:
@@ -244,3 +240,4 @@ if st.session_state.get("show_recommendations", False):
                     </div>
                 </div>
             """, unsafe_allow_html=True)
+
